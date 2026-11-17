@@ -39,21 +39,30 @@ jobs:
         if: failure()
         run: grep -n "error:" build.log | head -60 || true
 
-      - name: IPA packen (App Group per ad-hoc-Signatur eintragen)
+      - name: IPAs packen
         run: |
-          mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/OGSpeed.app Payload/
-          if [ -d Payload/OGSpeed.app/PlugIns/OGSpeedWidget.appex ]; then
-            codesign --force --sign - --entitlements OGSpeedWidget/OGSpeedWidget.entitlements Payload/OGSpeed.app/PlugIns/OGSpeedWidget.appex
-          fi
-          codesign --force --sign - --entitlements OGSpeed/OGSpeed.entitlements Payload/OGSpeed.app
+          APP=build/Build/Products/Release-iphoneos/OGSpeed.app
+          # 1) Standard: ohne Widget und ohne Signatur/Entitlements – wie die Schatzkarte,
+          #    lässt sich mit SideStore, FlekSt0re, Feather & Co. signieren
+          rm -rf Payload && mkdir -p Payload
+          cp -R "$APP" Payload/
+          rm -rf Payload/OGSpeed.app/PlugIns Payload/OGSpeed.app/_CodeSignature
           zip -qry OGSpeed.ipa Payload
-          ls -la OGSpeed.ipa
+          # 2) Mit Widget (App Group, ad-hoc signiert) – nur für SideStore/AltStore
+          rm -rf Payload && mkdir -p Payload
+          cp -R "$APP" Payload/
+          codesign --force --sign - --entitlements OGSpeedWidget/OGSpeedWidget.entitlements Payload/OGSpeed.app/PlugIns/OGSpeedWidget.appex
+          codesign --force --sign - --entitlements OGSpeed/OGSpeed.entitlements Payload/OGSpeed.app
+          zip -qry OGSpeed-Widget.ipa Payload
+          ls -la *.ipa
+          unzip -l OGSpeed.ipa | grep -c PlugIns || true
 
       - uses: actions/upload-artifact@v4
         with:
           name: OGSpeed-IPA
-          path: OGSpeed.ipa
+          path: |
+            OGSpeed.ipa
+            OGSpeed-Widget.ipa
 
       - name: Release anlegen
         env:
@@ -66,7 +75,7 @@ jobs:
           printf '%s\n\n<!-- build: %s -->\n' "$NOTES" "${{ github.run_number }}" > notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Version $VERSION gibt es schon – IPA wird aktualisiert."
-            gh release upload "$TAG" OGSpeed.ipa --clobber
+            gh release upload "$TAG" OGSpeed.ipa OGSpeed-Widget.ipa --clobber
           else
-            gh release create "$TAG" OGSpeed.ipa --title "OGSpeed ${VERSION}" --notes-file notes.md
+            gh release create "$TAG" OGSpeed.ipa OGSpeed-Widget.ipa --title "OGSpeed ${VERSION}" --notes-file notes.md
           fi
