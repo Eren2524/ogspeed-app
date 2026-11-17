@@ -1,0 +1,72 @@
+name: OGSpeed IPA bauen
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version lesen
+        id: ver
+        run: echo "version=$(grep -m1 'MARKETING_VERSION' project.yml | sed -E 's/.*"([0-9.]+)".*/\1/')" >> "$GITHUB_OUTPUT"
+
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+
+      - name: Xcode-Projekt erzeugen
+        run: xcodegen generate
+
+      - name: App bauen (unsigniert)
+        run: |
+          set -o pipefail
+          xcodebuild -project OGSpeed.xcodeproj -scheme OGSpeed -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} build | tee build.log | grep -E "error:|warning: unre|BUILD (SUCCEEDED|FAILED)" || true
+          test -d build/Build/Products/Release-iphoneos/OGSpeed.app
+
+      - name: Fehler anzeigen
+        if: failure()
+        run: grep -n "error:" build.log | head -60 || true
+
+      - name: IPA packen (App Group per ad-hoc-Signatur eintragen)
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/OGSpeed.app Payload/
+          if [ -d Payload/OGSpeed.app/PlugIns/OGSpeedWidget.appex ]; then
+            codesign --force --sign - --entitlements OGSpeedWidget/OGSpeedWidget.entitlements Payload/OGSpeed.app/PlugIns/OGSpeedWidget.appex
+          fi
+          codesign --force --sign - --entitlements OGSpeed/OGSpeed.entitlements Payload/OGSpeed.app
+          zip -qry OGSpeed.ipa Payload
+          ls -la OGSpeed.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OGSpeed-IPA
+          path: OGSpeed.ipa
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          TAG="ogspeed-v${VERSION}"
+          NOTES=$(awk -v v="## ${VERSION}" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md)
+          [ -z "$NOTES" ] && NOTES="- Fehlerbehebungen und Verbesserungen."
+          printf '%s\n\n<!-- build: %s -->\n' "$NOTES" "${{ github.run_number }}" > notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Version $VERSION gibt es schon – IPA wird aktualisiert."
+            gh release upload "$TAG" OGSpeed.ipa --clobber
+          else
+            gh release create "$TAG" OGSpeed.ipa --title "OGSpeed ${VERSION}" --notes-file notes.md
+          fi
