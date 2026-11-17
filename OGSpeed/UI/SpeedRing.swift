@@ -41,47 +41,57 @@ struct SpeedRing: View {
 
     var body: some View {
         GeometryReader { geo in
-            let size = min(geo.size.width, geo.size.height)
+            let size: CGFloat = min(geo.size.width, geo.size.height)
             ZStack {
-                // Spur
-                Circle()
-                    .trim(from: 0, to: arc)
-                    .stroke(Color.white.opacity(0.07), style: StrokeStyle(lineWidth: 24, lineCap: .round))
-                    .rotationEffect(.degrees(135))
-                // Fortschritt der Phase (dünner Außenring)
-                Circle()
-                    .trim(from: 0, to: arc * (phase == .idle ? 0 : progress))
-                    .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .rotationEffect(.degrees(135))
-                    .padding(-20)
-                    .animation(.linear(duration: 0.2), value: progress)
-                // Wert
-                Circle()
-                    .trim(from: 0, to: arc * fill)
-                    .stroke(AngularGradient(colors: colors, center: .center, startAngle: .degrees(0), endAngle: .degrees(270 * max(fill, 0.01))),
-                            style: StrokeStyle(lineWidth: 24, lineCap: .round))
-                    .rotationEffect(.degrees(135))
-                    .neonGlow(colors[0], radius: 12)
-                    .animation(.spring(response: 0.45, dampingFraction: 0.75), value: fill)
-
-                // Skala
-                if phase == .download || phase == .upload || phase == .done {
-                    ForEach(SpeedScale.marks, id: \.self) { m in
-                        let a = Angle.degrees(135 + 270 * SpeedScale.fraction(m))
-                        Text(m >= 1000 ? "1G" : "\(Int(m))")
-                            .font(.system(size: 10, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.secondary)
-                            .position(x: size / 2 + cos(a.radians) * (size / 2 - 44),
-                                      y: size / 2 + sin(a.radians) * (size / 2 - 44))
-                    }
-                }
-
+                trackRing
+                progressRing
+                valueRing
+                if showScale { scaleLabels(size: size) }
                 center(size: size)
             }
             .frame(width: size, height: size)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .aspectRatio(1, contentMode: .fit)
+    }
+
+    private var showScale: Bool { phase == .download || phase == .upload || phase == .done }
+
+    private var trackRing: some View {
+        Circle()
+            .trim(from: 0, to: arc)
+            .stroke(Color.white.opacity(0.07), style: StrokeStyle(lineWidth: 24, lineCap: .round))
+            .rotationEffect(.degrees(135))
+    }
+
+    private var progressRing: some View {
+        let amount: Double = phase == .idle ? 0 : progress
+        return Circle()
+            .trim(from: 0, to: CGFloat(arc * amount))
+            .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            .rotationEffect(.degrees(135))
+            .padding(-20)
+            .animation(.linear(duration: 0.2), value: progress)
+    }
+
+    private var valueRing: some View {
+        let f: Double = fill
+        let endDeg: Double = 270 * Swift.max(f, 0.01)
+        let gradient = AngularGradient(colors: colors, center: .center,
+                                       startAngle: .degrees(0), endAngle: .degrees(endDeg))
+        let style = StrokeStyle(lineWidth: 24, lineCap: .round)
+        return Circle()
+            .trim(from: 0, to: CGFloat(arc * f))
+            .stroke(gradient, style: style)
+            .rotationEffect(.degrees(135))
+            .neonGlow(colors[0], radius: 12)
+            .animation(.spring(response: 0.45, dampingFraction: 0.75), value: f)
+    }
+
+    private func scaleLabels(size: CGFloat) -> some View {
+        ForEach(SpeedScale.marks, id: \.self) { m in
+            ScaleMark(mark: m, size: size)
+        }
     }
 
     @ViewBuilder
@@ -132,5 +142,23 @@ struct SpeedRing: View {
         case .done: return "checkmark"
         default: return "network"
         }
+    }
+}
+
+private struct ScaleMark: View {
+    let mark: Double
+    let size: CGFloat
+
+    var body: some View {
+        let radians: Double = (135.0 + 270.0 * SpeedScale.fraction(mark)) * Double.pi / 180.0
+        let half: Double = Double(size) / 2.0
+        let r: Double = half - 44.0
+        let x: Double = half + cos(radians) * r
+        let y: Double = half + sin(radians) * r
+        let label: String = mark >= 1000 ? "1G" : "\(Int(mark))"
+        return Text(label)
+            .font(.system(size: 10, weight: .semibold, design: .rounded))
+            .foregroundStyle(.secondary)
+            .position(x: CGFloat(x), y: CGFloat(y))
     }
 }
