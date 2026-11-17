@@ -46,7 +46,7 @@ jobs:
           #    lässt sich mit SideStore, FlekSt0re, Feather & Co. signieren
           rm -rf Payload && mkdir -p Payload
           cp -R "$APP" Payload/
-          rm -rf Payload/OGSpeed.app/PlugIns Payload/OGSpeed.app/_CodeSignature
+          rm -rf Payload/OGSpeed.app/PlugIns Payload/OGSpeed.app/_CodeSignature Payload/OGSpeed.app/Metadata.appintents
           zip -qry OGSpeed.ipa Payload
           # 2) Mit Widget (App Group, ad-hoc signiert) – nur für SideStore/AltStore
           rm -rf Payload && mkdir -p Payload
