@@ -17,10 +17,15 @@ struct NetzView: View {
     @State private var detector = NetDetector.shared
     @AppStorage(DoneTips.key) private var doneRaw = ""
     @State private var showIP = false
+    @AppStorage(RouterChoice.key) private var routerChoice = "auto"
+    @AppStorage(RouterChoice.providerKey) private var providerChoice = "auto"
+
+    private var vendor: RouterVendor? { RouterChoice.effective(choice: routerChoice, detected: detector.identity?.router?.vendor) }
 
     private var sections: [GuideSection] {
         let id = detector.identity
-        return Guides.sections(router: id?.router?.vendor, provider: id?.provider, access: id?.access, connection: network.kind)
+        let provider = RouterChoice.effectiveProvider(choice: providerChoice, detected: id?.provider)
+        return Guides.sections(router: vendor, provider: provider, access: id?.access, connection: network.kind)
     }
 
     var body: some View {
@@ -28,6 +33,12 @@ struct NetzView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     identityCard
+                    if network.kind != .cellular {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Dein Router").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                            RouterChips(detected: detector.identity?.router?.vendor)
+                        }
+                    }
                     turboCard
                     guideLink
                     toolsGrid
@@ -158,11 +169,17 @@ struct NetzView: View {
         .glass()
     }
 
+    private var guideTitle: String {
+        if network.kind == .cellular { return "Maximum aus dem Mobilfunk" }
+        guard let v = vendor else { return "Maximum aus deinem Netz" }
+        return v == .unknown ? "Maximum aus deinem Router" : "Maximum aus \(v.label)"
+    }
+
     private var guideLink: some View {
         let done = DoneTips.parse(doneRaw)
         let all = sections.flatMap(\.tips)
         let count = all.filter { done.contains($0.id) }.count
-        let title = detector.identity?.router.map { "Maximum aus \($0.displayName)" } ?? (network.kind == .cellular ? "Maximum aus dem Mobilfunk" : "Maximum aus deinem Netz")
+        let title = guideTitle
         return NavigationLink { GuideView(sections: sections) } label: {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {

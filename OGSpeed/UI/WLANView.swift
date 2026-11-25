@@ -54,6 +54,21 @@ struct WLANView: View {
     @State private var newRoom = false
     @State private var line: FritzLine?
     @AppStorage(K.fritzEnabled) private var fritzEnabled = false
+    @AppStorage(RouterChoice.key) private var routerChoice = "auto"
+    @AppStorage(RouterChoice.providerKey) private var providerChoice = "auto"
+    @State private var detector = NetDetector.shared
+
+    private var detectedRouter: RouterInfo? { detector.identity?.router }
+    private var vendor: RouterVendor? { RouterChoice.effective(choice: routerChoice, detected: detectedRouter?.vendor) }
+    private var provider: Provider? { RouterChoice.effectiveProvider(choice: providerChoice, detected: detector.identity?.provider) }
+    private var routerAddress: String {
+        if let d = detectedRouter, d.vendor == vendor { return d.address }
+        return RouterChoice.defaultAddress(vendor)
+    }
+    private var routerModel: String? {
+        if let d = detectedRouter, d.vendor == vendor { return d.displayName }
+        return vendor.map(\.label)
+    }
 
     var body: some View {
         NavigationStack {
@@ -66,10 +81,19 @@ struct WLANView: View {
                             .glass()
                     }
 
-                    if !fritzEnabled {
-                        fritzPrompt
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Dein Router").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        RouterChips(detected: detectedRouter?.vendor)
+                    }
+
+                    if vendor == .fritz {
+                        if !fritzEnabled { fritzPrompt } else { signalCard }
+                    } else if vendor == nil && detector.running {
+                        HStack(spacing: 10) { ProgressView(); Text("Erkenne deinen Router …").font(.subheadline) }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .glass()
                     } else {
-                        signalCard
+                        RouterStatusCard(vendor: vendor, model: routerModel, address: routerAddress)
                     }
 
                     Button { searching = true } label: {
@@ -77,6 +101,7 @@ struct WLANView: View {
                     }
                     .buttonStyle(NeonButtonStyle())
 
+                    RouterTipsCard(vendor: vendor, provider: provider, access: detector.identity?.access)
                     roomsSection
                     tipsCard
                 }

@@ -16,8 +16,8 @@ struct MoreView: View {
                     }
                 }
                 Section("Einstellungen") {
-                    NavigationLink { FritzSetupView() } label: {
-                        row("wifi.router.fill", "FRITZ!Box", fritzEnabled ? "Verbunden" : "Nicht eingerichtet", Neon.purple)
+                    NavigationLink { RouterSettingsView() } label: {
+                        row("wifi.router.fill", "Router & Anbieter", routerSubtitle, Neon.purple)
                     }
                     Toggle(isOn: $dataSaver) {
                         row("antenna.radiowaves.left.and.right", "Datensparmodus", "Bei Mobilfunk kürzer messen", Neon.yellow)
@@ -46,6 +46,15 @@ struct MoreView: View {
             .background(NeonBackground())
             .navigationTitle("Mehr")
         }
+    }
+
+    @AppStorage(RouterChoice.key) private var routerChoice = "auto"
+
+    private var routerSubtitle: String {
+        let v = RouterChoice.effective(choice: routerChoice, detected: NetDetector.shared.identity?.router?.vendor)
+        let name = v.map { $0 == .unknown ? "Anderer Router" : $0.label } ?? "Automatisch"
+        if v == .fritz { return name + (fritzEnabled ? " · verbunden" : " · nicht angemeldet") }
+        return name
     }
 
     private func row(_ icon: String, _ title: String, _ sub: String, _ color: Color) -> some View {
