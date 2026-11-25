@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.2
+- Router frei wählbar: FRITZ!Box, Telekom Speedport, Vodafone Station, EasyBox, o2 HomeBox, TP-Link, ASUS, Netgear oder andere – automatisch erkannt oder fest eingestellt
+- WLAN-Tab zeigt für jeden Router die Verbindungsqualität (bei Speedport & Co. geschätzt über die Antwortzeit) und die optimalen Einstellungen zum Abhaken
+- Telekom Speedport: Leitungstempo und Firmware live vom Router, ohne Passwort
+- Einstellungen: neuer Bereich „Router & Anbieter“ statt nur FRITZ!Box
+
 ## 1.1
 - Neuer Tab „Netz“ mit automatischer Netz-Erkennung: Anbieter (Telekom, Vodafone, o2, 1&1 …), Router-Modell, DSL/Kabel/Mobilfunk, IPv6 und DS-Lite-Check mit NAT-Prognose für PS5/Xbox
 - „Maximum rausholen“: Insider-Einstellungen für FRITZ!Box, Telekom Speedport, Vodafone Station, o2 HomeBox und andere Router, dazu Anbieter-, PS5-, iPhone- und Mobilfunk-Tipps zum Abhaken
