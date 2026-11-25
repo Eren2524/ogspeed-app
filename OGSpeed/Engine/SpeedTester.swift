@@ -138,6 +138,10 @@ final class SpeedTester {
         var r = SpeedResult()
         r.connection = kind
         r.radio = cellular ? NetworkMonitor.radioTechnology() : nil
+        if let id = NetDetector.shared.identity {
+            r.provider = id.provider == .other ? id.providerName : id.provider.label
+            r.router = id.router?.displayName
+        }
         r.networkName = wlan?.ssid
         r.band = wlan?.band
         r.downMbps = down.mbps

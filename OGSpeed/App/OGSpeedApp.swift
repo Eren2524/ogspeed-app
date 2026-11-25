@@ -22,6 +22,7 @@ struct OGSpeedApp: App {
         WindowGroup {
             TabView(selection: $tab) {
                 TestView().tag(0).tabItem { Label("Test", systemImage: "speedometer") }
+                NetzView().tag(4).tabItem { Label("Netz", systemImage: "network") }
                 WLANView().tag(1).tabItem { Label("WLAN", systemImage: "wifi") }
                 HistoryView().tag(2).tabItem { Label("Verlauf", systemImage: "chart.xyaxis.line") }
                 MoreView().tag(3).tabItem { Label("Mehr", systemImage: "square.grid.2x2") }
@@ -35,6 +36,7 @@ struct OGSpeedApp: App {
             .onOpenURL { url in
                 if url.host == "test" { startFromShortcut() }
                 if url.host == "wlan" { tab = 1 }
+                if url.host == "netz" { tab = 4 }
             }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {

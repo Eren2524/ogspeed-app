@@ -240,4 +240,58 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                          band: band,
                          standard: inf["NewStandard"])
     }
+
+    // MARK: Anschluss & Geräte
+
+    /// IPv4 der FRITZ!Box im Internet (leer bzw. 0.0.0.0 bei DS-Lite)
+    func externalIPv4() async throws -> String {
+        for (svc, ctl) in [("urn:dslforum-org:service:WANIPConnection:1", "/upnp/control/wanipconnection1"),
+                           ("urn:dslforum-org:service:WANPPPConnection:1", "/upnp/control/wanpppconn1")] {
+            if let v = try? await soap(service: svc, control: ctl, action: "GetExternalIPAddress"),
+               let ip = v["NewExternalIPAddress"] {
+                return ip
+            }
+        }
+        throw FritzError.notFound
+    }
+
+    /// Alle Geräte, die die FRITZ!Box kennt
+    func hostList() async throws -> [FritzHost] {
+        let v = try await soap(service: "urn:dslforum-org:service:Hosts:1", control: "/upnp/control/hosts",
+                               action: "X_AVM-DE_GetHostListPath")
+        guard let path = v["NewX_AVM-DE_HostListPath"], let url = URL(string: "http://\(host):49000\(path)") else {
+            throw FritzError.notFound
+        }
+        let res = try await session.data(from: url)
+        let xml = String(decoding: res.0, as: UTF8.self)
+        var hosts: [FritzHost] = []
+        var rest = xml[...]
+        while let a = rest.range(of: "<Item>"), let b = rest.range(of: "</Item>", range: a.upperBound..<rest.endIndex) {
+            let item = String(rest[a.upperBound..<b.lowerBound])
+            let mac = Self.tag("MACAddress", in: item) ?? ""
+            let name = Self.tag("HostName", in: item) ?? "Unbekannt"
+            hosts.append(FritzHost(name: name.isEmpty ? "Unbekannt" : name,
+                                   ip: Self.tag("IPAddress", in: item) ?? "",
+                                   mac: mac,
+                                   active: Self.tag("Active", in: item) == "1",
+                                   interface: Self.tag("InterfaceType", in: item) ?? "",
+                                   speedMbps: Int(Self.tag("X_AVM-DE_Speed", in: item) ?? ""),
+                                   guest: Self.tag("X_AVM-DE_Guest", in: item) == "1"))
+            rest = rest[b.upperBound...]
+        }
+        return hosts
+    }
+}
+
+struct FritzHost: Identifiable, Hashable {
+    var id: String { mac.isEmpty ? ip + name : mac }
+    var name: String
+    var ip: String
+    var mac: String
+    var active: Bool
+    var interface: String
+    var speedMbps: Int?
+    var guest: Bool
+
+    var isWLAN: Bool { interface.lowercased().contains("802.11") || interface.lowercased().contains("wlan") }
 }

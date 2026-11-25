@@ -34,6 +34,7 @@ struct TestView: View {
                     if let r = tester.result, tester.phase == .done {
                         ResultSections(result: r)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
+                        ShareResultButton(result: r)
                         Button {
                             tester.start(network: network, history: history)
                         } label: {
@@ -69,7 +70,7 @@ struct TestView: View {
                 .frame(width: 36, height: 36)
                 .background(Neon.cyan.opacity(0.15), in: Circle())
             VStack(alignment: .leading, spacing: 1) {
-                Text(network.summary).font(.subheadline.weight(.bold))
+                Text(headerTitle).font(.subheadline.weight(.bold))
                 Text(tester.server.map { "Server: \($0)" } ?? (network.kind == .cellular && Prefs.dataSaver ? "Datensparmodus an" : "Server wird automatisch gewählt"))
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -79,6 +80,14 @@ struct TestView: View {
             }
         }
         .glass(radius: 22, padding: 12)
+    }
+
+    private var headerTitle: String {
+        guard let id = NetDetector.shared.identity, id.connection == network.kind else { return network.summary }
+        var parts = [network.summary]
+        if id.provider != .other { parts.append(id.provider.label) } else if let n = id.providerName { parts.append(n) }
+        if let r = id.router, network.kind == .wifi { parts.append(r.displayName) }
+        return parts.joined(separator: " · ")
     }
 
     private var liveTiles: some View {

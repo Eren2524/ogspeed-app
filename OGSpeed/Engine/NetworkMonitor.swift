@@ -28,6 +28,7 @@ final class NetworkMonitor {
         else if p.usesInterfaceType(.wiredEthernet) { kind = .wired }
         else { kind = .unknown }
         radio = kind == .cellular ? Self.radioTechnology() : nil
+        NetDetector.shared.networkChanged(kind, radio: radio)
     }
 
     var summary: String {
