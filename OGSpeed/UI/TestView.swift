@@ -498,6 +498,9 @@ struct TestView: View {
                 Divider().overlay(.white.opacity(0.07))
                 InfoLine(title: "Testserver", value: s, icon: "server.rack")
             }
+            Divider().overlay(.white.opacity(0.07))
+            InfoLine(title: "VPN", value: r.vpnActive ? "Aktiv" : "Aus",
+                     icon: r.vpnActive ? "lock.fill" : "lock.open", level: r.vpnActive ? .great : nil)
         }
         .glass(radius: 20, padding: 14)
     }

@@ -33,6 +33,7 @@ struct NetzView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     identityCard
+                    vpnCard
                     if network.kind != .cellular {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Dein Router").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
@@ -135,6 +136,41 @@ struct NetzView: View {
         }
     }
 
+    // MARK: VPN
+
+    private var vpnCard: some View {
+        let active = VPNDetect.isActive
+        return NavigationLink { VPNView() } label: {
+            HStack(spacing: 13) {
+                Image(systemName: active ? "lock.fill" : "lock.open.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(active ? Neon.green : Neon.cyan)
+                    .frame(width: 42, height: 42)
+                    .background((active ? Neon.green : Neon.cyan).opacity(0.14),
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("VPN").font(.headline)
+                        if active {
+                            Text("AKTIV").font(.caption2.weight(.heavy)).foregroundStyle(.black)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Neon.green, in: Capsule())
+                        }
+                    }
+                    Text(active
+                         ? "Prüfen, ob wirklich verschlüsselt wird und wo dein Ausgang liegt"
+                         : "Einrichten, prüfen und Tempo mit und ohne Tunnel vergleichen")
+                        .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .glass(radius: 22, padding: 14)
+    }
+
     // MARK: Turbo-Plan
 
     private var turboCard: some View {
@@ -211,6 +247,7 @@ struct NetzView: View {
                 tool("Gaming-Radar", "Live-Ping zu Spiele-Servern", "scope", Neon.magenta) { PingRadarView() }
                 tool("DNS-Turbo", "Schnellsten DNS finden", "hare.fill", Neon.cyan) { DNSTurboView(router: detector.identity?.router?.address) }
                 tool("Geräte im WLAN", "Wer hängt in deinem Netz?", "person.2.wave.2.fill", Neon.purple) { DevicesView() }
+                tool("VPN-Prüfung", "Verschlüsselt? Wo liegt der Server?", "lock.shield.fill", Neon.green) { VPNView() }
             }
         }
     }

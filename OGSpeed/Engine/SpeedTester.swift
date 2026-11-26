@@ -153,6 +153,7 @@ final class SpeedTester {
         r.dnsMs = await dnsValue
         r.server = server
         r.dataUsedMB = Double(down.bytes + up.bytes) / 1_000_000
+        r.vpnActive = VPNDetect.isActive
         r.signalPercent = wlan?.signal
         r.linkMbps = wlan?.linkMbps
 

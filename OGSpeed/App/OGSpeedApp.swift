@@ -36,7 +36,7 @@ struct OGSpeedApp: App {
             .onOpenURL { url in
                 if url.host == "test" { startFromShortcut() }
                 if url.host == "wlan" { tab = 1 }
-                if url.host == "netz" { tab = 4 }
+                if url.host == "netz" || url.host == "vpn" { tab = 4 }
             }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {

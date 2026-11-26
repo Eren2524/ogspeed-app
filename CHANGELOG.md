@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.4
+- Neue Rubrik VPN: erkennt automatisch, ob ein Tunnel aktiv ist, und prüft ihn
+- Prüfbericht mit Nachweis: Ausgangsserver mit Land, Stadt und Betreiber, Vergleich zum Zustand ohne VPN, DNS-Leck-Test, Verschlüsselung, Verbindungsart
+- Tempo-Vergleich mit und ohne VPN samt Tempoverlust in Prozent
+- Einrichtungs-Assistent für NordVPN (NordLynx, Auto-Verbindung, Kill Switch, Bedrohungsschutz)
+- Einrichtungs-Assistent für ein kostenloses VPN ins eigene Heimnetz über WireGuard in der FRITZ!Box, inklusive DS-Lite-Warnung
+- Jeder Speedtest merkt sich, ob er durch einen Tunnel lief; im Verlauf mit Schloss markiert
+
 ## 1.3
 - Test-Seite komplett neu im Stil von iOS: Abschnitte, Phasen-Anzeige für Reaktion/Download/Upload, Messwert-Kacheln und Listen statt Textwüste
 - Deutlich mehr Daten: Jitter, Ping unter Last, Aussetzer, DNS-Antwort, WLAN-Signal und -Tempo, Datenverbrauch, Verhältnis Download zu Upload

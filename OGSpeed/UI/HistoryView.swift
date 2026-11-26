@@ -143,6 +143,9 @@ struct HistoryView: View {
                     HStack(spacing: 12) {
                         AmpelDot(level: Rating.overall(r).level, size: 10)
                         Image(systemName: r.connection.icon).foregroundStyle(.secondary).frame(width: 22)
+                        if r.vpnActive {
+                            Image(systemName: "lock.fill").font(.caption2).foregroundStyle(Neon.green)
+                        }
                         VStack(alignment: .leading, spacing: 2) {
                             Text(r.date.formatted(date: .abbreviated, time: .shortened)).font(.subheadline.weight(.semibold))
                             Text([r.networkName, r.radio, r.band].compactMap { $0 }.joined(separator: " · "))
