@@ -83,7 +83,7 @@ struct SecurityRow: View {
         } label: {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 10) {
-                    Image(systemName: finding.icon).font(.caption)
+                    Image(systemName: Sym.safe(finding.icon)).font(.caption)
                         .foregroundStyle(finding.level.color).frame(width: 20)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(finding.title).font(.subheadline)
@@ -155,7 +155,7 @@ struct NetworkSecurityView: View {
                 Button {
                     Task { await run() }
                 } label: {
-                    Label(report == nil ? "Sicherheits-Labor starten" : "Erneut prüfen", systemImage: "shield.checkered")
+                    Label(report == nil ? "Sicherheits-Labor starten" : "Erneut prüfen", systemImage: Sym.safe("shield.checkered"))
                 }
                 .buttonStyle(NeonButtonStyle(colors: [Neon.green, Neon.cyan]))
                 .disabled(running)

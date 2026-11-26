@@ -49,6 +49,22 @@ extension View {
     }
 }
 
+/// Prüft einmalig, ob es ein Systemsymbol wirklich gibt. Fehlt es auf dieser
+/// iOS-Version, wird ein sicher vorhandenes genommen statt einer leeren Fläche.
+enum Sym {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var cache: [String: String] = [:]
+
+    static func safe(_ name: String, _ fallback: String = "circle.fill") -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        if let hit = cache[name] { return hit }
+        let result = UIImage(systemName: name) != nil ? name : fallback
+        cache[name] = result
+        return result
+    }
+}
+
 /// Ampel-Punkt mit Leuchten
 struct AmpelDot: View {
     let level: Level

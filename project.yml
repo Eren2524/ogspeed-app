@@ -6,7 +6,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.6"
+    MARKETING_VERSION: "1.7"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGNING_ALLOWED: NO
@@ -28,6 +28,7 @@ targets:
         CFBundleDisplayName: OGSpeed
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
         UIRequiresFullScreen: true
         UILaunchScreen: {}

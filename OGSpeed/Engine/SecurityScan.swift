@@ -91,7 +91,7 @@ enum SecurityScan {
                                    detail: "Das Zertifikat der Testseite stammt von „\(root)“ – einer offiziellen Zertifizierungsstelle. Deine verschlüsselten Verbindungen werden in diesem Netz nicht aufgebrochen.",
                                    severity: 0)
         }
-        return SecurityFinding(key: "tls", icon: "eye.trianglebadge.exclamationmark.fill",
+        return SecurityFinding(key: "tls", icon: "eye.fill",
                                title: "Verschlüsselung wird aufgebrochen", value: "Fremder Aussteller",
                                detail: "Das Zertifikat wurde von „\(root)“ ausgestellt – das ist keine der großen offiziellen Stellen. In diesem Netz schaltet sich jemand zwischen dich und die Webseiten und kann mitlesen, was eigentlich verschlüsselt sein sollte. Typisch für Firmennetze mit Filter-Proxy, Schutzsoftware auf dem Gerät – oder einen Angriff.",
                                advice: "In einem fremden Netz: sofort VPN einschalten oder auf mobile Daten wechseln. Zu Hause: prüfen, welches Profil oder Programm das verursacht.",
@@ -249,7 +249,7 @@ enum SecurityScan {
     private static func encryptionFinding(_ beacon: String) -> SecurityFinding {
         let b = beacon.lowercased()
         if b.contains("none") || b.isEmpty {
-            return SecurityFinding(key: "wlanenc", icon: "lock.open.trianglebadge.exclamationmark.fill",
+            return SecurityFinding(key: "wlanenc", icon: "lock.open.fill",
                                    title: "WLAN ist offen", value: "Ohne Verschlüsselung",
                                    detail: "Dein WLAN ist unverschlüsselt. Jeder in Funkreichweite kann mitlesen und mitsurfen.",
                                    advice: "In der FRITZ!Box unter WLAN › Sicherheit sofort WPA2/WPA3 einschalten.",

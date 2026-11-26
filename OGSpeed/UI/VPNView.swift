@@ -199,7 +199,7 @@ struct FindingRow: View {
         } label: {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
-                    Image(systemName: finding.icon).font(.caption)
+                    Image(systemName: Sym.safe(finding.icon)).font(.caption)
                         .foregroundStyle(finding.level.color).frame(width: 20)
                     Text(finding.title).font(.subheadline)
                     Spacer(minLength: 8)

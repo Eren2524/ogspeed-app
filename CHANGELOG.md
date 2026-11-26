@@ -11,6 +11,14 @@
 - iPhone: Gerätecode, iOS-Version gegen Apples offizielle Liste, Uhrzeit-Abweichung
 - Jede Prüfung und jeder Messwert mit Erklärung in Alltagssprache, dazu Legende
 
+## 1.7
+- Privacy Manifest für App und Widget ergänzt (seit Mai 2024 Pflicht für den App Store)
+- Export-Compliance im Info.plist hinterlegt
+- Symbole abgesichert: fehlt ein Symbol auf einer iOS-Version, wird ein vorhandenes genommen
+- Marken-Symbole durch neutrale ersetzt
+- Datenschutzerklärung und Support-Seite unter docs/ ergänzt
+- Checklisten STORE.md und ANDROID.md für die Veröffentlichung
+
 ## 1.5
 - Bei jedem Speedtest läuft jetzt automatisch ein Sicherheits-Check des Netzwerks mit – ohne Extra-Wartezeit
 - Erkennt aufgebrochene Verschlüsselung (fremder Zertifikats-Aussteller), umgeleitetes DNS, eingetragene Proxys und Netze, die Antworten verändern

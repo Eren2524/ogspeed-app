@@ -581,7 +581,7 @@ struct VerdictCard: View {
                 withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { open.toggle() }
             } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: verdict.icon)
+                    Image(systemName: Sym.safe(verdict.icon))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(verdict.level.color)
                         .frame(width: 38, height: 38)

@@ -31,7 +31,8 @@ struct ServiceCheckView: View {
                 VStack(spacing: 0) {
                     ForEach(checker.results) { r in
                         HStack(spacing: 12) {
-                            Image(systemName: r.service.icon).frame(width: 24).foregroundStyle(r.ok ? Neon.cyan : Neon.red)
+                            Image(systemName: Sym.safe(r.service.icon)).frame(width: 24)
+                                .foregroundStyle(r.ok ? Neon.cyan : Neon.red)
                             Text(r.service.name).font(.subheadline.weight(.semibold))
                             Spacer()
                             if let p = r.pingMs {
@@ -148,7 +149,7 @@ struct PingRadarView: View {
 
     private func row(_ s: PingRadar.Series) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: s.service.icon).frame(width: 24).foregroundStyle(Neon.magenta)
+            Image(systemName: Sym.safe(s.service.icon)).frame(width: 24).foregroundStyle(Neon.magenta)
             VStack(alignment: .leading, spacing: 2) {
                 Text(s.service.name).font(.subheadline.weight(.semibold))
                 Text("Ø \(Fmt.ms(s.avg)) ms · Jitter \(Fmt.ms(s.jitter)) ms\(s.lost > 0 ? " · \(s.lost) verloren" : "")")

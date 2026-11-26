@@ -14,8 +14,8 @@ enum ServiceList {
                            NetService(name: "Google", host: "www.google.com", icon: "magnifyingglass", gaming: false)]
 
     static let all: [NetService] = [
-        NetService(name: "PlayStation Network", host: "my.playstation.com", icon: "playstation.logo", gaming: true),
-        NetService(name: "Xbox Live", host: "www.xbox.com", icon: "xbox.logo", gaming: true),
+        NetService(name: "PlayStation Network", host: "my.playstation.com", icon: "gamecontroller.fill", gaming: true),
+        NetService(name: "Xbox Live", host: "www.xbox.com", icon: "gamecontroller.fill", gaming: true),
         NetService(name: "Steam", host: "store.steampowered.com", icon: "gamecontroller.fill", gaming: true),
         NetService(name: "Epic Games / Fortnite", host: "www.epicgames.com", icon: "gamecontroller.fill", gaming: true),
         NetService(name: "Riot (LoL, Valorant)", host: "www.riotgames.com", icon: "gamecontroller.fill", gaming: true),
@@ -24,7 +24,7 @@ enum ServiceList {
         NetService(name: "Netflix", host: "www.netflix.com", icon: "play.tv.fill", gaming: false),
         NetService(name: "YouTube", host: "www.youtube.com", icon: "play.rectangle.fill", gaming: false),
         NetService(name: "Twitch", host: "www.twitch.tv", icon: "tv.fill", gaming: false),
-        NetService(name: "Disney+", host: "www.disneyplus.com", icon: "sparkles.tv.fill", gaming: false),
+        NetService(name: "Disney+", host: "www.disneyplus.com", icon: "tv.fill", gaming: false),
         NetService(name: "Prime Video", host: "www.primevideo.com", icon: "film.fill", gaming: false),
         NetService(name: "Spotify", host: "open.spotify.com", icon: "music.note", gaming: false),
         NetService(name: "WhatsApp", host: "web.whatsapp.com", icon: "message.fill", gaming: false),

@@ -256,7 +256,7 @@ struct NetzView: View {
     private func tool<D: View>(_ title: String, _ sub: String, _ icon: String, _ color: Color, @ViewBuilder dest: @escaping () -> D) -> some View {
         NavigationLink { dest() } label: {
             VStack(alignment: .leading, spacing: 8) {
-                Image(systemName: icon).font(.title2).foregroundStyle(color).neonGlow(color, radius: 5)
+                Image(systemName: Sym.safe(icon)).font(.title2).foregroundStyle(color).neonGlow(color, radius: 5)
                 Text(title).font(.subheadline.weight(.bold))
                 Text(sub).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
@@ -283,7 +283,7 @@ struct GuideView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(sections) { s in
                     VStack(alignment: .leading, spacing: 10) {
-                        Label(s.title, systemImage: s.icon).font(.headline)
+                        Label(s.title, systemImage: Sym.safe(s.icon)).font(.headline)
                         ForEach(s.tips) { tip in tipRow(tip) }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
