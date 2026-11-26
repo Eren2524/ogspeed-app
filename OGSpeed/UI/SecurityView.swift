@@ -306,7 +306,7 @@ struct NetworkSecurityView: View {
         .glass(radius: 20, padding: 14)
     }
 
-    private func devicesCard(_ services: [NetService]) -> some View {
+    private func devicesCard(_ services: [LanService]) -> some View {
         let grouped = Dictionary(grouping: services, by: \.name).sorted { $0.key < $1.key }
         return VStack(alignment: .leading, spacing: 10) {
             SectionLabel(title: "Geräte, die sich zeigen", trailing: "\(grouped.count)")

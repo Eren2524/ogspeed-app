@@ -71,7 +71,7 @@ struct ScanFact: Identifiable, Hashable {
     var explain: String
 }
 
-struct NetService: Identifiable, Hashable {
+struct LanService: Identifiable, Hashable {
     var id: String { name + type }
     var name: String
     var type: String
@@ -88,7 +88,7 @@ struct PortHit: Identifiable, Hashable {
 struct DeepReport {
     var findings: [SecurityFinding] = []
     var facts: [ScanFact] = []
-    var services: [NetService] = []
+    var services: [LanService] = []
     var localNetworkDenied = false
     var routerPorts: [PortHit] = []
     var routerHost: String?
@@ -204,7 +204,7 @@ enum DeepScan {
         return r
     }
 
-    private static func bonjourIfHome(_ home: Bool) async -> (services: [NetService], denied: Bool) {
+    private static func bonjourIfHome(_ home: Bool) async -> (services: [LanService], denied: Bool) {
         guard home else { return ([], false) }
         return await BonjourScan.scan(seconds: 4)
     }
@@ -549,7 +549,7 @@ enum DeepScan {
 
     // MARK: Geräte im Netz (Bonjour)
 
-    private static func bonjourFindings(_ services: [NetService], denied: Bool, identity: NetIdentity?) -> [SecurityFinding] {
+    private static func bonjourFindings(_ services: [LanService], denied: Bool, identity: NetIdentity?) -> [SecurityFinding] {
         if denied {
             return [SecurityFinding(key: "bonjour", icon: "hand.raised.fill", title: "Geräte-Suche gesperrt",
                                     value: "Keine Erlaubnis",
@@ -559,7 +559,7 @@ enum DeepScan {
         }
         var out: [SecurityFinding] = []
         let devices = Set(services.map(\.name))
-        let risky = services.compactMap { s -> (NetService, BonjourScan.Kind)? in
+        let risky = services.compactMap { s -> (LanService, BonjourScan.Kind)? in
             guard let k = BonjourScan.kind(for: s.type), k.severity >= 2 else { return nil }
             return (s, k)
         }
@@ -890,17 +890,17 @@ enum BonjourScan {
 
     final class Collector: @unchecked Sendable {
         private let lock = NSLock()
-        private var items = Set<NetService>()
+        private var items = Set<LanService>()
         private var denied = false
-        func add(_ s: NetService) { _ = lock.withLock { items.insert(s) } }
+        func add(_ s: LanService) { _ = lock.withLock { items.insert(s) } }
         func deny() { lock.withLock { denied = true } }
-        var result: (services: [NetService], denied: Bool) {
+        var result: (services: [LanService], denied: Bool) {
             lock.withLock { (items.sorted { $0.name < $1.name }, denied && items.isEmpty) }
         }
     }
 
     /// Sucht einige Sekunden nach Geräten, die sich im Netz vorstellen.
-    static func scan(seconds: Double) async -> (services: [NetService], denied: Bool) {
+    static func scan(seconds: Double) async -> (services: [LanService], denied: Bool) {
         await withCheckedContinuation { cont in
             let box = Collector()
             let q = DispatchQueue(label: "ogspeed.bonjour")
@@ -910,7 +910,7 @@ enum BonjourScan {
                     for r in results {
                         if case let .service(name, type, _, _) = r.endpoint,
                            let clean = Sanitize.deviceName(name, max: 40) {
-                            box.add(NetService(name: clean, type: type))
+                            box.add(LanService(name: clean, type: type))
                         }
                     }
                 }
