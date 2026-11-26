@@ -6,7 +6,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.5"
+    MARKETING_VERSION: "1.6"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGNING_ALLOWED: NO
@@ -35,7 +35,8 @@ targets:
         UIStatusBarStyle: UIStatusBarStyleLightContent
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIApplicationSupportsIndirectInputEvents: true
-        NSLocalNetworkUsageDescription: "OGSpeed fragt bei deiner FRITZ!Box die echte WLAN-Signalstärke ab."
+        NSLocalNetworkUsageDescription: "OGSpeed fragt bei deiner FRITZ!Box die WLAN-Signalstärke ab und prüft im Sicherheits-Labor deinen Router und die Geräte in deinem Netz."
+        NSBonjourServices: [_ssh._tcp, _sftp-ssh._tcp, _rfb._tcp, _telnet._tcp, _ftp._tcp, _smb._tcp, _afpovertcp._tcp, _adisk._tcp, _mqtt._tcp, _home-assistant._tcp, _hap._tcp, _http._tcp, _ipp._tcp, _printer._tcp, _airplay._tcp, _raop._tcp, _googlecast._tcp, _spotify-connect._tcp, _sonos._tcp, _hue._tcp, _companion-link._tcp, _amzn-wplay._tcp, _workstation._tcp, _device-info._tcp]
         NSCameraUsageDescription: "Mach ein Foto von deinem Raum, um darauf die WLAN-Wärmekarte zu erstellen."
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

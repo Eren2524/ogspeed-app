@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.6
+- „Netzwerk-Sicherheit“ wird zum Sicherheits-Labor: über 25 Prüfungen in einem Durchgang, mit Punktzahl von 0 bis 100
+- Verschlüsselung: Zertifikate von Apple, Google, Cloudflare und Wikipedia gegengeprüft, TLS-Version
+- DNS: gefälschte Fehlerseiten, DNSSEC-Prüfung, Rebind-Schutz des Routers, DNS-Server im Ausland
+- Verbindung: Ruf deiner IP (Sperrlisten, Proxy, Rechenzentrum), IPv6-Datenschutz
+- Router: 16 typische Dienste abgeklopft (Telnet, FTP, Fernwartung …), UPnP, unverschlüsseltes Router-Menü
+- Geräte im Netz: Suche per Bonjour mit Liste, Warnung bei SSH, VNC & Co., Gäste-Trennung in fremden WLANs
+- Mobilfunk: 2G-Warnung (Fake-Masten), 5G-Standalone-Erkennung; Hotspot: eigener Hotspot und fremder Hotspot erkannt
+- iPhone: Gerätecode, iOS-Version gegen Apples offizielle Liste, Uhrzeit-Abweichung
+- Jede Prüfung und jeder Messwert mit Erklärung in Alltagssprache, dazu Legende
+
 ## 1.5
 - Bei jedem Speedtest läuft jetzt automatisch ein Sicherheits-Check des Netzwerks mit – ohne Extra-Wartezeit
 - Erkennt aufgebrochene Verschlüsselung (fremder Zertifikats-Aussteller), umgeleitetes DNS, eingetragene Proxys und Netze, die Antworten verändern

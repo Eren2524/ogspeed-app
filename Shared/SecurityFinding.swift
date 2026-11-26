@@ -12,6 +12,8 @@ struct SecurityFinding: Codable, Identifiable, Hashable {
     var advice: String?
     /// 0 = alles gut, 1 = Hinweis, 2 = Warnung, 3 = Gefahr
     var severity: Int
+    /// Rubrik im Sicherheits-Labor (fehlt bei älteren gespeicherten Tests)
+    var category: String? = nil
 
     var level: Level {
         switch severity {
