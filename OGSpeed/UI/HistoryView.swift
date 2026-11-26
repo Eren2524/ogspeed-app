@@ -146,6 +146,10 @@ struct HistoryView: View {
                         if r.vpnActive {
                             Image(systemName: "lock.fill").font(.caption2).foregroundStyle(Neon.green)
                         }
+                        if r.security.worstSeverity >= 2 {
+                            Image(systemName: "exclamationmark.triangle.fill").font(.caption2)
+                                .foregroundStyle(r.security.worstSeverity >= 3 ? Neon.red : Neon.yellow)
+                        }
                         VStack(alignment: .leading, spacing: 2) {
                             Text(r.date.formatted(date: .abbreviated, time: .shortened)).font(.subheadline.weight(.semibold))
                             Text([r.networkName, r.radio, r.band].compactMap { $0 }.joined(separator: " · "))

@@ -53,6 +53,8 @@ struct PrivacyView: View {
                      "Das FRITZ!Box-Kennwort liegt im Schlüsselbund dieses iPhones, nur für dieses Gerät und nur im entsperrten Zustand lesbar. Es landet in keinem Backup und verlässt dein Heimnetz nicht.")
                 info("eye.slash.fill", "Neutrale Testnamen",
                      "Der DNS-Turbo fragt Zufallsnamen bei harmlosen Domains ab statt echter Dienste. Die Messung bleibt genau, verrät aber nichts über dich.")
+                info("shield.checkered", "Beim Sicherheits-Check",
+                     "Geprüft wird mit einer Testabfrage an captive.apple.com, einem Zertifikats-Test gegen apple.com und der Auflösung zweier bekannter Namen. Dabei werden keine Daten über dich übertragen.")
                 info("globe", "Nur bei der VPN-Prüfung",
                      "Für den Nachweis, wo dein Verkehr austritt, fragt OGSpeed drei öffentliche Dienste: Cloudflare, ipapi.is und edns.ip-api.com. Die sehen dabei nur das, was ohnehin jede Webseite sieht. Ohne VPN-Prüfung wird keiner davon kontaktiert.")
                 info("network.badge.shield.half.filled", "Keine offenen Türen",

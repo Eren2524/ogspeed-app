@@ -341,8 +341,10 @@ struct TestView: View {
 
     private func resultBlock(_ r: SpeedResult) -> some View {
         VStack(spacing: 14) {
+            SecurityBanner(findings: r.security)
             verdictHero(r)
             measurements(r)
+            SecuritySection(findings: r.security)
             comparison(r)
 
             SectionLabel(title: "Was geht damit?")
@@ -520,6 +522,7 @@ struct ResultSections: View {
     var body: some View {
         let o = Rating.overall(result)
         VStack(spacing: 14) {
+            SecurityBanner(findings: result.security)
             HStack(alignment: .top, spacing: 14) {
                 AmpelStack(level: o.level)
                 VStack(alignment: .leading, spacing: 5) {
@@ -540,6 +543,7 @@ struct ResultSections: View {
                            level: Rating.pingLevel(result.pingMs))
             }
 
+            SecuritySection(findings: result.security)
             ForEach(Rating.all(result)) { v in VerdictCard(verdict: v) }
             DetailCard(result: result)
         }

@@ -37,6 +37,7 @@ struct SpeedResult: Codable, Identifiable, Hashable {
     var provider: String?       // z. B. "Vodafone"
     var router: String?         // z. B. "FRITZ!Box 7690"
     var vpnActive = false       // lief dieser Test durch einen VPN-Tunnel?
+    var security: [SecurityFinding] = []   // Sicherheits-Check des Netzwerks
     var networkName: String?    // z. B. WLAN-Name von der FRITZ!Box
     var band: String?           // "2,4 GHz", "5 GHz", "6 GHz"
     var downMbps: Double = 0

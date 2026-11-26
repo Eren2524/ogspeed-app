@@ -346,6 +346,46 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         }
         return hosts
     }
+
+    /// Verschlüsselung des Funknetzes (z. B. "11i" = WPA2, "None" = offen)
+    func wlanEncryption() async throws -> String {
+        let idx = lock.withLock { wlanIndex } ?? 1
+        let v = await info(idx)
+        if let b = v["NewBeaconType"], !b.isEmpty { return b }
+        let w = await info(1)
+        guard let b = w["NewBeaconType"] else { throw FritzError.notFound }
+        return b
+    }
+
+    /// Aus dem Internet freigegebene Ports
+    func portMappings() async throws -> [PortMapping] {
+        let services = [("urn:dslforum-org:service:WANPPPConnection:1", "/upnp/control/wanpppconn1"),
+                        ("urn:dslforum-org:service:WANIPConnection:1", "/upnp/control/wanipconnection1")]
+        for (svc, ctl) in services {
+            guard let c = try? await soap(service: svc, control: ctl, action: "GetPortMappingNumberOfEntries"),
+                  let n = Int(c["NewPortMappingNumberOfEntries"] ?? "") else { continue }
+            var out: [PortMapping] = []
+            for i in 0..<min(n, 40) {
+                guard let v = try? await soap(service: svc, control: ctl, action: "GetGenericPortMappingEntry",
+                                              args: [("NewPortMappingIndex", "\(i)")]) else { continue }
+                out.append(PortMapping(externalPort: Int(v["NewExternalPort"] ?? "") ?? 0,
+                                       client: Sanitize.deviceName(v["NewInternalClient"], max: 24) ?? "?",
+                                       proto: v["NewProtocol"] ?? "",
+                                       note: Sanitize.deviceName(v["NewPortMappingDescription"], max: 30),
+                                       enabled: v["NewEnabled"] != "0"))
+            }
+            return out
+        }
+        throw FritzError.notFound
+    }
+}
+
+struct PortMapping: Hashable {
+    var externalPort: Int
+    var client: String
+    var proto: String
+    var note: String?
+    var enabled: Bool
 }
 
 struct FritzHost: Identifiable, Hashable {

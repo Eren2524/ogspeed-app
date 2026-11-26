@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.5
+- Bei jedem Speedtest läuft jetzt automatisch ein Sicherheits-Check des Netzwerks mit – ohne Extra-Wartezeit
+- Erkennt aufgebrochene Verschlüsselung (fremder Zertifikats-Aussteller), umgeleitetes DNS, eingetragene Proxys und Netze, die Antworten verändern
+- Mit FRITZ!Box zusätzlich: WLAN-Verschlüsselung, offene Portfreigaben und neue, unbekannte Geräte im WLAN
+- Rotes Warnbanner oben im Ergebnis, Vibration bei Gefahr, Warnsymbol im Verlauf
+- Jeder Befund mit Erklärung und konkretem Lösungsvorschlag
+- Neuer Bildschirm „Netzwerk-Sicherheit“ für den Check ohne Speedtest
+
 ## 1.4
 - Neue Rubrik VPN: erkennt automatisch, ob ein Tunnel aktiv ist, und prüft ihn
 - Prüfbericht mit Nachweis: Ausgangsserver mit Land, Stadt und Betreiber, Vergleich zum Zustand ohne VPN, DNS-Leck-Test, Verschlüsselung, Verbindungsart

@@ -76,6 +76,11 @@ final class SpeedTester {
         let fritz = kind == .wifi ? FritzClient.fromPrefs() : nil
         let fritzTask: Task<FritzWLAN?, Never>? = fritz.map { f in Task { try? await f.wlanStatus() } }
 
+        // Sicherheits-Check läuft parallel mit, kostet dadurch keine Extra-Zeit
+        let scan = Task.detached(priority: .utility) { () -> [SecurityFinding] in
+            await SecurityScan.run(connection: kind, identity: await NetDetector.shared.identity)
+        }
+
         phase = .preparing
         let pingSession = Cloudflare.makePingSession()
         async let dnsValue = Cloudflare.dnsTime()
@@ -102,6 +107,7 @@ final class SpeedTester {
             try? await Task.sleep(for: .milliseconds(60))
         }
         guard !samples.isEmpty else {
+            scan.cancel()
             phase = .failed("Der Testserver antwortet nicht. Prüf deine Verbindung.")
             return
         }
@@ -154,6 +160,7 @@ final class SpeedTester {
         r.server = server
         r.dataUsedMB = Double(down.bytes + up.bytes) / 1_000_000
         r.vpnActive = VPNDetect.isActive
+        r.security = await scan.value
         r.signalPercent = wlan?.signal
         r.linkMbps = wlan?.linkMbps
 
@@ -162,7 +169,8 @@ final class SpeedTester {
         progress = 1
         phase = .done
         history.add(r)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        let worst = r.security.worstSeverity
+        UINotificationFeedbackGenerator().notificationOccurred(worst >= 3 ? .error : (worst >= 2 ? .warning : .success))
     }
 
     private struct TransferResult {

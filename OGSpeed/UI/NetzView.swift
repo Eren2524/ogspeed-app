@@ -248,6 +248,7 @@ struct NetzView: View {
                 tool("DNS-Turbo", "Schnellsten DNS finden", "hare.fill", Neon.cyan) { DNSTurboView(router: detector.identity?.router?.address) }
                 tool("Geräte im WLAN", "Wer hängt in deinem Netz?", "person.2.wave.2.fill", Neon.purple) { DevicesView() }
                 tool("VPN-Prüfung", "Verschlüsselt? Wo liegt der Server?", "lock.shield.fill", Neon.green) { VPNView() }
+                tool("Netzwerk-Sicherheit", "Liest jemand mit? Offene Türen?", "shield.checkered", Neon.red) { NetworkSecurityView() }
             }
         }
     }
