@@ -26,6 +26,7 @@ struct FritzDevice: Equatable {
 
 enum FritzError: LocalizedError {
     case unreachable, auth, notInWLAN, notFound, fault(String)
+    case insecureBlocked, certChanged
 
     var errorDescription: String? {
         switch self {
@@ -34,6 +35,10 @@ enum FritzError: LocalizedError {
         case .notInWLAN: return "Das iPhone ist gerade nicht im WLAN."
         case .notFound: return "Die FRITZ!Box kennt dieses iPhone im WLAN nicht."
         case .fault(let s): return "FRITZ!Box meldet: \(s)"
+        case .insecureBlocked:
+            return "Die FRITZ!Box ist nur unverschlüsselt erreichbar. OGSpeed schickt dein Kennwort nicht über eine unverschlüsselte Verbindung. Aktiviere in der FRITZ!Box unter Heimnetz › Netzwerk › Netzwerkeinstellungen den Zugriff für Anwendungen (dort auch über HTTPS)."
+        case .certChanged:
+            return "Das Sicherheitszertifikat deiner FRITZ!Box hat sich geändert. Das passiert nach einem Werksreset – kann aber auch bedeuten, dass sich jemand im WLAN als deine FRITZ!Box ausgibt. Prüfe die Verbindung in den Einstellungen."
         }
     }
 }
@@ -47,6 +52,10 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private var wlanIndex: Int?
     private var infoCache: [Int: (Date, [String: String])] = [:]
     private let lock = NSLock()
+    /// nil = noch nicht geprüft, sonst "https://host:49443" bzw. "http://host:49000"
+    private var base: String?
+    private(set) var usedInsecureTransport = false
+    private var certMismatch = false
 
     init(host: String, user: String, password: String) {
         self.host = host
@@ -80,8 +89,33 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 
     // MARK: SOAP
 
+    /// TR-064 läuft verschlüsselt auf Port 49443 und unverschlüsselt auf 49000.
+    /// OGSpeed nimmt immer zuerst die verschlüsselte Verbindung.
+    func baseURL() async throws -> String {
+        if let b = lock.withLock({ base }) { return b }
+        let secure = "https://\(host):49443"
+        if await reachable(secure) {
+            lock.withLock { base = secure; usedInsecureTransport = false }
+            return secure
+        }
+        if lock.withLock({ certMismatch }) { throw FritzError.certChanged }
+        guard Privacy.fritzAllowHTTP else { throw FritzError.insecureBlocked }
+        let plain = "http://\(host):49000"
+        lock.withLock { base = plain; usedInsecureTransport = true }
+        return plain
+    }
+
+    private func reachable(_ base: String) async -> Bool {
+        guard let url = URL(string: base + "/tr64desc.xml") else { return false }
+        var r = URLRequest(url: url)
+        r.timeoutInterval = 4
+        guard let res = try? await session.data(for: r) else { return false }
+        return ((res.1 as? HTTPURLResponse)?.statusCode ?? 0) == 200
+    }
+
     func soap(service: String, control: String, action: String, args: [(String, String)] = []) async throws -> [String: String] {
-        guard let url = URL(string: "http://\(host):49000\(control)") else { throw FritzError.unreachable }
+        let base = try await baseURL()
+        guard let url = URL(string: base + control) else { throw FritzError.unreachable }
         let argXML = args.map { "<\($0.0)>\(escape($0.1))</\($0.0)>" }.joined()
         let body = """
         <?xml version="1.0" encoding="utf-8"?>
@@ -101,9 +135,11 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         } catch {
             throw FritzError.unreachable
         }
-        let data = result.0, resp = result.1
+        let resp = result.1
+        guard result.0.count <= 1_000_000 else { throw FritzError.fault("Unerwartet große Antwort") }
+        let data = result.0
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-        let text = String(data: data, encoding: .utf8) ?? ""
+        let text = String(decoding: data, as: UTF8.self)
         if code == 401 { throw FritzError.auth }
         if code != 200 {
             let desc = Self.tag("errorDescription", in: text) ?? "Fehler \(code)"
@@ -114,14 +150,41 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge,
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        let m = challenge.protectionSpace.authenticationMethod
-        if (m == NSURLAuthenticationMethodHTTPDigest || m == NSURLAuthenticationMethodHTTPBasic) && challenge.previousFailureCount == 0 {
-            completionHandler(.useCredential, URLCredential(user: user, password: password, persistence: .forSession))
-        } else if m == NSURLAuthenticationMethodHTTPDigest || m == NSURLAuthenticationMethodHTTPBasic {
-            completionHandler(.cancelAuthenticationChallenge, nil)
-        } else {
-            completionHandler(.performDefaultHandling, nil)
+        let space = challenge.protectionSpace
+        let m = space.authenticationMethod
+
+        // Selbstsigniertes Zertifikat der FRITZ!Box: nur der beim ersten Mal
+        // gemerkte Fingerabdruck wird akzeptiert.
+        if m == NSURLAuthenticationMethodServerTrust {
+            guard space.host.lowercased() == host.lowercased(), let trust = space.serverTrust else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+            if CertPin.accept(trust: trust, host: host) {
+                completionHandler(.useCredential, URLCredential(trust: trust))
+            } else {
+                lock.withLock { certMismatch = true }
+                completionHandler(.cancelAuthenticationChallenge, nil)
+            }
+            return
         }
+
+        if m == NSURLAuthenticationMethodHTTPDigest || m == NSURLAuthenticationMethodHTTPBasic {
+            // Basic schickt das Kennwort praktisch im Klartext – über eine
+            // unverschlüsselte Verbindung wird es niemals gesendet.
+            let encrypted = space.protocol?.lowercased() == "https"
+            if m == NSURLAuthenticationMethodHTTPBasic && !encrypted {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+            guard challenge.previousFailureCount == 0 else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+            completionHandler(.useCredential, URLCredential(user: user, password: password, persistence: .none))
+            return
+        }
+        completionHandler(.performDefaultHandling, nil)
     }
 
     private func escape(_ s: String) -> String {
@@ -259,10 +322,12 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func hostList() async throws -> [FritzHost] {
         let v = try await soap(service: "urn:dslforum-org:service:Hosts:1", control: "/upnp/control/hosts",
                                action: "X_AVM-DE_GetHostListPath")
-        guard let path = v["NewX_AVM-DE_HostListPath"], let url = URL(string: "http://\(host):49000\(path)") else {
+        let base = try await baseURL()
+        guard let path = v["NewX_AVM-DE_HostListPath"], let url = URL(string: base + path) else {
             throw FritzError.notFound
         }
         let res = try await session.data(from: url)
+        guard res.0.count <= 2_000_000 else { throw FritzError.fault("Unerwartet große Geräteliste") }
         let xml = String(decoding: res.0, as: UTF8.self)
         var hosts: [FritzHost] = []
         var rest = xml[...]
@@ -270,7 +335,7 @@ final class FritzClient: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             let item = String(rest[a.upperBound..<b.lowerBound])
             let mac = Self.tag("MACAddress", in: item) ?? ""
             let name = Self.tag("HostName", in: item) ?? "Unbekannt"
-            hosts.append(FritzHost(name: name.isEmpty ? "Unbekannt" : name,
+            hosts.append(FritzHost(name: Sanitize.deviceName(name) ?? "Unbekannt",
                                    ip: Self.tag("IPAddress", in: item) ?? "",
                                    mac: mac,
                                    active: Self.tag("Active", in: item) == "1",

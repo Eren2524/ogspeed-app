@@ -55,7 +55,11 @@ final class RoomStore {
 
     private var folder: URL {
         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Rooms", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: url.path) {
+            try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true,
+                                                     attributes: [.protectionKey: FileProtectionType.complete])
+        }
+        FileGuard.protect(directory: url)
         return url
     }
     private var indexURL: URL { folder.appendingPathComponent("rooms.json") }
@@ -75,7 +79,7 @@ final class RoomStore {
         let file = "\(UUID().uuidString).jpg"
         let scaled = image.scaledDown(maxSide: 2000)
         guard let data = scaled.jpegData(compressionQuality: 0.85) else { return nil }
-        do { try data.write(to: folder.appendingPathComponent(file)) } catch { return nil }
+        guard FileGuard.write(data, to: folder.appendingPathComponent(file)) else { return nil }
         let room = RoomMap(name: name, imageFile: file)
         rooms.insert(room, at: 0)
         save()
@@ -93,7 +97,7 @@ final class RoomStore {
     }
 
     private func save() {
-        if let d = try? JSONEncoder.iso.encode(rooms) { try? d.write(to: indexURL, options: .atomic) }
+        if let d = try? JSONEncoder.iso.encode(rooms) { FileGuard.write(d, to: indexURL) }
     }
 }
 

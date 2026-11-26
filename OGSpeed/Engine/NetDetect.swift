@@ -232,7 +232,7 @@ final class NetDetector {
     // MARK: Router finden
 
     nonisolated static func routerIfNeeded(_ wanted: Bool, localIP: String?) async -> RouterInfo? {
-        guard wanted else { return nil }
+        guard wanted, Privacy.routerScan else { return nil }
         return await detectRouter(localIP: localIP)
     }
 
@@ -258,7 +258,7 @@ final class NetDetector {
         }
         candidates += ["192.168.178.1", "192.168.2.1", "192.168.0.1", "192.168.1.1"]
         var seen = Set<String>()
-        let list = candidates.filter { seen.insert($0).inserted }
+        let list = candidates.filter { Sanitize.isLocalAddress($0) && seen.insert($0).inserted }
         let preferred = list.first
 
         return await withTaskGroup(of: RouterInfo?.self) { group in
@@ -287,7 +287,7 @@ final class NetDetector {
         let low = t.lowercased()
         func model(_ pattern: String) -> String? {
             guard let r = t.range(of: pattern, options: .regularExpression) else { return nil }
-            return String(t[r]).trimmingCharacters(in: .whitespacesAndNewlines)
+            return Sanitize.deviceName(String(t[r]))
         }
         if low.contains("fritz!box") || low.contains("fritz.box") {
             return RouterInfo(vendor: .fritz, model: model("FRITZ!Box [0-9A-Za-z ]{2,20}"), address: address)

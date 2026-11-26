@@ -13,11 +13,11 @@ struct SpeedportStatus: Equatable {
     }
     var downMbps: Double? { values["dsl_downstream"].flatMap(Double.init).map { $0 / 1000 } }
     var upMbps: Double? { values["dsl_upstream"].flatMap(Double.init).map { $0 / 1000 } }
-    var firmware: String? { values["firmware_version"] }
-    var name: String? { values["device_name"] ?? values["router_name"] }
+    var firmware: String? { Sanitize.deviceName(values["firmware_version"], max: 32) }
+    var name: String? { Sanitize.deviceName(values["device_name"] ?? values["router_name"]) }
     var wlanOn: Bool? { values["use_wlan"].map { $0 == "1" } }
     var wlan5On: Bool? { values["use_wlan_5ghz"].map { $0 == "1" } }
-    var ssid: String? { values["wlan_ssid"] }
+    var ssid: String? { Sanitize.deviceName(values["wlan_ssid"]) }
 }
 
 enum SpeedportClient {
@@ -38,10 +38,12 @@ enum SpeedportClient {
         guard let data = text.data(using: .utf8),
               let arr = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else { return nil }
         var dict: [String: String] = [:]
-        for item in arr {
-            if let id = item["varid"] as? String {
-                if let v = item["varvalue"] as? String { dict[id] = v }
-                else if let v = item["varvalue"] { dict[id] = "\(v)" }
+        for item in arr.prefix(400) {
+            guard let id = item["varid"] as? String, id.count <= 64 else { continue }
+            if let v = item["varvalue"] as? String {
+                dict[id] = String(v.prefix(200))
+            } else if let v = item["varvalue"] {
+                dict[id] = String("\(v)".prefix(200))
             }
         }
         return dict.isEmpty ? nil : SpeedportStatus(values: dict)

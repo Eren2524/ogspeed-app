@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.3
+- Test-Seite komplett neu im Stil von iOS: Abschnitte, Phasen-Anzeige für Reaktion/Download/Upload, Messwert-Kacheln und Listen statt Textwüste
+- Deutlich mehr Daten: Jitter, Ping unter Last, Aussetzer, DNS-Antwort, WLAN-Signal und -Tempo, Datenverbrauch, Verhältnis Download zu Upload
+- Neuer Abschnitt „Vergleich“: Abweichung zu den letzten 5 Tests, Bestwert, Anteil am gebuchten Tempo, Tageszeit
+- Sicherheit: FRITZ!Box nur noch über HTTPS mit gemerktem Zertifikat, Kennwort nie über eine unverschlüsselte Verbindung
+- Verlauf, Messpunkte und Raumfotos liegen verschlüsselt auf dem iPhone, Kennwort gerätegebunden im Schlüsselbund
+- Namen werden über DNS-over-HTTPS aufgelöst: im WLAN ist nicht mehr sichtbar, welche Dienste OGSpeed prüft
+- DNS-Turbo misst mit neutralen Zufallsnamen statt echter Dienste
+- Neuer Bereich „Privatsphäre & Sicherheit“ mit allen Schaltern
+- WLAN-Name bleibt standardmäßig aus geteilten Bildern heraus
+
 ## 1.2
 - Router frei wählbar: FRITZ!Box, Telekom Speedport, Vodafone Station, EasyBox, o2 HomeBox, TP-Link, ASUS, Netgear oder andere – automatisch erkannt oder fest eingestellt
 - WLAN-Tab zeigt für jeden Router die Verbindungsqualität (bei Speedport & Co. geschätzt über die Antwortzeit) und die optimalen Einstellungen zum Abhaken

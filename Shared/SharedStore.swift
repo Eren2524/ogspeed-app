@@ -45,7 +45,7 @@ enum SharedStore {
 
     static func saveHistory(_ list: [SpeedResult]) {
         if let data = try? JSONEncoder.iso.encode(list) {
-            try? data.write(to: historyURL, options: .atomic)
+            FileGuard.write(data, to: historyURL, widgetReadable: true)
         }
         if let last = list.first, let data = try? JSONEncoder.iso.encode(last) {
             defaults.set(data, forKey: "lastResult")

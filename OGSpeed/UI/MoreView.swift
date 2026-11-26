@@ -19,6 +19,9 @@ struct MoreView: View {
                     NavigationLink { RouterSettingsView() } label: {
                         row("wifi.router.fill", "Router & Anbieter", routerSubtitle, Neon.purple)
                     }
+                    NavigationLink { PrivacyView() } label: {
+                        row("lock.shield.fill", "Privatsphäre & Sicherheit", "Was OGSpeed im Netz preisgibt", Neon.green)
+                    }
                     Toggle(isOn: $dataSaver) {
                         row("antenna.radiowaves.left.and.right", "Datensparmodus", "Bei Mobilfunk kürzer messen", Neon.yellow)
                     }
@@ -38,7 +41,7 @@ struct MoreView: View {
                         Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
                             .foregroundStyle(.secondary)
                     }
-                    Text("Messungen über das Speedtest-Netz von Cloudflare. Deine Daten bleiben auf dem iPhone.")
+                    Text("Messungen über das Speedtest-Netz von Cloudflare. Verlauf, Räume und Fotos liegen verschlüsselt auf dem iPhone, das FRITZ!Box-Kennwort im Schlüsselbund. OGSpeed sendet nichts an eigene Server.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -76,9 +79,12 @@ struct FritzSetupView: View {
     @AppStorage(K.fritzHost) private var host = "fritz.box"
     @AppStorage(K.fritzUser) private var user = ""
     @State private var password = Keychain.get()
+    @AppStorage(PrivacyKeys.fritzAllowHTTP) private var allowHTTP = false
     @State private var status: String?
     @State private var ok = false
     @State private var testing = false
+    @State private var secure = true
+    @State private var blocked = false
 
     var body: some View {
         Form {
@@ -111,6 +117,21 @@ struct FritzSetupView: View {
                     Label(status, systemImage: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(ok ? Neon.green : Neon.yellow).font(.subheadline)
                 }
+                if ok {
+                    Label(secure ? "Verschlüsselt verbunden (HTTPS, Zertifikat gemerkt)" : "Unverschlüsselt verbunden",
+                          systemImage: secure ? "lock.fill" : "lock.open.fill")
+                        .font(.caption).foregroundStyle(secure ? Neon.green : Neon.yellow)
+                }
+                if blocked {
+                    Toggle(isOn: $allowHTTP) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Unverschlüsselt erlauben").font(.subheadline)
+                            Text("Nur nutzen, wenn deine FRITZ!Box kein HTTPS anbietet. Dein Kennwort wird dann trotzdem nie im Klartext gesendet – OGSpeed nutzt nur das abgesicherte Digest-Verfahren.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(Neon.yellow)
+                }
                 if enabled {
                     Button("FRITZ!Box trennen", role: .destructive) {
                         enabled = false
@@ -134,7 +155,8 @@ struct FritzSetupView: View {
         testing = true
         defer { testing = false }
         Keychain.set(password)
-        let c = FritzClient(host: host.isEmpty ? "fritz.box" : host, user: user, password: password)
+        let h = host.isEmpty ? "fritz.box" : host
+        let c = FritzClient(host: h, user: user, password: password)
         defer { c.close() }
         do {
             let info = try await c.deviceInfo()
@@ -142,12 +164,16 @@ struct FritzSetupView: View {
             if let w = try? await c.wlanStatus() {
                 text += " · dein Signal: \(w.signal) %"
             }
+            secure = !c.usedInsecureTransport
+            blocked = false
             enabled = true
             ok = true
             status = text
         } catch {
             ok = false
             enabled = false
+            if case FritzError.insecureBlocked = error { blocked = true }
+            if case FritzError.certChanged = error { CertPin.forget(h) }
             status = error.localizedDescription
         }
     }

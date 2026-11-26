@@ -431,8 +431,7 @@ struct ShareCard: View {
                     }
                 }
             }
-            Text([result.connection.label, result.networkName, result.server].compactMap { $0 }.joined(separator: " · "))
-                .font(.caption).foregroundStyle(.white.opacity(0.5))
+            Text(footer).font(.caption).foregroundStyle(.white.opacity(0.5))
         }
         .padding(28)
         .frame(width: 400)
@@ -445,6 +444,15 @@ struct ShareCard: View {
         )
         .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(LinearGradient(colors: [Neon.cyan, Neon.magenta], startPoint: .leading, endPoint: .trailing), lineWidth: 2))
         .clipShape(RoundedRectangle(cornerRadius: 28))
+    }
+
+    /// Der WLAN-Name steht nur im Bild, wenn es ausdrücklich erlaubt ist.
+    private var footer: String {
+        var parts = [result.connection.label]
+        if Privacy.showSSIDInShare, let n = result.networkName { parts.append(n) }
+        if let p = result.provider { parts.append(p) }
+        if let s = result.server { parts.append(s) }
+        return parts.joined(separator: " · ")
     }
 
     private func stat(_ title: String, _ value: String, _ unit: String) -> some View {

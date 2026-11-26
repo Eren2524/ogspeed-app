@@ -41,7 +41,9 @@ enum Keychain {
         guard !value.isEmpty else { return }
         var add = base
         add[kSecValueData as String] = Data(value.utf8)
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        // Nur auf diesem iPhone und nur im entsperrten Zustand lesbar;
+        // landet damit auch in keinem Backup.
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         SecItemAdd(add as CFDictionary, nil)
     }
 

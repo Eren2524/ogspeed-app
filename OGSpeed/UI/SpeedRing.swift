@@ -60,7 +60,7 @@ struct SpeedRing: View {
     private var trackRing: some View {
         Circle()
             .trim(from: 0, to: arc)
-            .stroke(Color.white.opacity(0.07), style: StrokeStyle(lineWidth: 24, lineCap: .round))
+            .stroke(Color.white.opacity(0.07), style: StrokeStyle(lineWidth: 20, lineCap: .round))
             .rotationEffect(.degrees(135))
     }
 
@@ -79,7 +79,7 @@ struct SpeedRing: View {
         let endDeg: Double = 270 * Swift.max(f, 0.01)
         let gradient = AngularGradient(colors: colors, center: .center,
                                        startAngle: .degrees(0), endAngle: .degrees(endDeg))
-        let style = StrokeStyle(lineWidth: 24, lineCap: .round)
+        let style = StrokeStyle(lineWidth: 20, lineCap: .round)
         return Circle()
             .trim(from: 0, to: CGFloat(arc * f))
             .stroke(gradient, style: style)

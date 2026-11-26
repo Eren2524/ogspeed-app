@@ -162,8 +162,17 @@ final class DNSBench {
     var running = false
     var progress = 0.0
 
-    static let domains = ["netflix.com", "youtube.com", "playstation.com", "spotify.com", "amazon.de",
-                          "instagram.com", "twitch.tv", "web.de", "ebay.de", "discord.com"]
+    /// Bewusst neutrale Namen: ein Zufallsname vor einer harmlosen Domain.
+    /// So misst der Test echte Antwortzeiten (nichts liegt im Zwischenspeicher)
+    /// und verrät niemandem im WLAN, welche Dienste dich interessieren.
+    static let neutralDomains = ["example.com", "example.net", "example.org", "iana.org", "icann.org"]
+
+    static func probeNames(_ count: Int = 10) -> [String] {
+        (0..<count).map { i in
+            let r = UInt32.random(in: 0...UInt32.max)
+            return "og\(String(r, radix: 36)).\(neutralDomains[i % neutralDomains.count])"
+        }
+    }
 
     func servers(router: String?) -> [DNSServer] {
         var list: [DNSServer] = []
@@ -186,7 +195,7 @@ final class DNSBench {
         for (i, s) in list.enumerated() {
             var times: [Double] = []
             var fails = 0
-            for d in Self.domains {
+            for d in Self.probeNames() {
                 if let t = await Probes.dnsQuery(server: s.ip, name: d) { times.append(t) } else { fails += 1 }
             }
             let sorted = times.sorted()

@@ -28,14 +28,25 @@ enum Probes {
 
     // MARK: TCP-"Ping" (Verbindungsaufbau = eine Hin- und Rückreise)
 
-    /// Misst die Zeit für den TCP-Handshake. Der erste Aufruf löst den Namen auf,
-    /// deshalb wird zweimal verbunden und der zweite Wert genommen.
+    /// Misst die Zeit für den TCP-Handshake. Der erste Aufruf wärmt die
+    /// Verbindung auf, gemessen wird der zweite Wert.
     static func tcpPing(host: String, port: UInt16 = 443, timeout: Double = 3) async -> Double? {
-        _ = await tcpConnect(host: host, port: port, timeout: timeout)
-        return await tcpConnect(host: host, port: port, timeout: timeout)
+        let target = await DoH.address(for: host) ?? host
+        _ = await tcpConnect(host: target, port: port, timeout: timeout, resolve: false)
+        return await tcpConnect(host: target, port: port, timeout: timeout, resolve: false)
     }
 
-    static func tcpConnect(host: String, port: UInt16, timeout: Double) async -> Double? {
+    /// `resolve: true` löst den Namen vorher verschlüsselt auf, damit im WLAN
+    /// kein Klartext-Name sichtbar wird.
+    static func tcpConnect(host: String, port: UInt16, timeout: Double, resolve: Bool = true) async -> Double? {
+        var target = host
+        if resolve, !DoH.isIPv4(host), !host.contains(":") {
+            target = await DoH.address(for: host) ?? host
+        }
+        return await connect(target, port: port, timeout: timeout)
+    }
+
+    private static func connect(_ host: String, port: UInt16, timeout: Double) async -> Double? {
         await withCheckedContinuation { (cont: CheckedContinuation<Double?, Never>) in
             guard let p = NWEndpoint.Port(rawValue: port) else { cont.resume(returning: nil); return }
             let conn = NWConnection(host: NWEndpoint.Host(host), port: p, using: .tcp)
@@ -121,14 +132,30 @@ enum Probes {
         cfg.timeoutIntervalForResource = 4
         cfg.waitsForConnectivity = false
         cfg.urlCache = nil
-        return URLSession(configuration: cfg)
+        cfg.httpCookieAcceptPolicy = .never
+        cfg.httpShouldSetCookies = false
+        cfg.httpAdditionalHeaders = ["User-Agent": "OGSpeed"]
+        return URLSession(configuration: cfg, delegate: NoRedirect.shared, delegateQueue: nil)
     }()
+
+    /// Ein Gerät im Heimnetz könnte per Weiterleitung versuchen, die Abfrage
+    /// nach außen zu schicken. Das wird hier unterbunden.
+    final class NoRedirect: NSObject, URLSessionTaskDelegate {
+        static let shared = NoRedirect()
+        func urlSession(_ session: URLSession, task: URLSessionTask,
+                        willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
+                        completionHandler: @escaping (URLRequest?) -> Void) {
+            completionHandler(nil)
+        }
+    }
 
     static func fetchText(_ urlString: String, maxBytes: Int = 60_000) async -> (text: String, server: String?)? {
         guard let url = URL(string: urlString) else { return nil }
         var r = URLRequest(url: url)
         r.timeoutInterval = 2.5
         guard let res = try? await quickSession.data(for: r) else { return nil }
+        if let http = res.1 as? HTTPURLResponse, http.expectedContentLength > 4_000_000 { return nil }
+        guard res.0.count <= 4_000_000 else { return nil }
         let data = res.0.prefix(maxBytes)
         let text = String(decoding: data, as: UTF8.self)
         let server = (res.1 as? HTTPURLResponse)?.value(forHTTPHeaderField: "Server")
